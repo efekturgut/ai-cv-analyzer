@@ -68,3 +68,18 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: "Giriş sırasında hata oluştu" });
   }
 };
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const userResult = await pool.query(
+      "SELECT id, email, created_at FROM users WHERE id = $1",
+      [userId]
+    );
+
+    res.json(userResult.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Profil alınamadı" });
+  }
+};
