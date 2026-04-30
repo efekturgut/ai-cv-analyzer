@@ -31,3 +31,40 @@ exports.register = async (req, res) => {
     res.status(500).json({ error: "Kayıt sırasında hata oluştu" });
   }
 };
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ error: "Email veya şifre hatalı" });
+    }
+
+    const user = userResult.rows[0];
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ error: "Email veya şifre hatalı" });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      message: "Giriş başarılı",
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Giriş sırasında hata oluştu" });
+  }
+};
